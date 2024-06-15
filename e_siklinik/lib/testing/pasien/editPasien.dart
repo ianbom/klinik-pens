@@ -14,7 +14,7 @@ class EditPasienPage extends StatefulWidget {
 }
 
 class _EditPasienPageState extends State<EditPasienPage> {
-  final String apiGetAllProdi = "http://10.0.2.2:8000/api/prodi";
+  final String apiGetAllProdi = "http://192.168.239.136:8000/api/prodi";
   List<dynamic> prodiList = [];
 
   final _formKey = GlobalKey<FormState>();
@@ -61,7 +61,7 @@ class _EditPasienPageState extends State<EditPasienPage> {
 
   Future<void> _updatePasien() async {
     final id = widget.pasien['id'];
-    final url = Uri.parse('http://10.0.2.2:8000/api/pasien/update/$id');
+    final url = Uri.parse('http://192.168.239.136:8000/api/pasien/update/$id');
     final request = http.MultipartRequest('POST', url);
 
     // Menambahkan data yang akan diperbarui

@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:fluttericon/entypo_icons.dart';
 import 'package:fluttericon/font_awesome5_icons.dart';
 
 class BuildSheet extends StatelessWidget {
-  final VoidCallback onTapEdit;
+  final VoidCallback? onTapEdit;
   final VoidCallback onTapDelete;
+  final String deleteOrRestoreData;
   const BuildSheet(
-      {super.key, required this.onTapEdit, required this.onTapDelete});
+      {super.key, this.onTapEdit, required this.onTapDelete, required this.deleteOrRestoreData});
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +28,8 @@ class BuildSheet extends StatelessWidget {
           padding: const EdgeInsets.all(30),
           child: Column(
             children: [
-              GestureDetector(
+              onTapEdit != null
+              ? GestureDetector(
                 onTap: onTapEdit,
                 child: Row(
                   children: [
@@ -46,17 +49,17 @@ class BuildSheet extends StatelessWidget {
                     const Text(
                       "Edit Data",
                       style:
-                          TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+                      TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
                     )
                   ],
                 ),
-              ),
+              ) : Container(),
               const SizedBox(
                 height: 15,
               ),
               GestureDetector(
                 onTap: onTapDelete,
-                child: const Row(
+                child: Row(
                   children: [
                     SizedBox(
                       width: 40,
@@ -64,16 +67,16 @@ class BuildSheet extends StatelessWidget {
                       child: FittedBox(
                         fit: BoxFit.contain,
                         child: Icon(
-                          Icons.delete_forever_outlined,
+                          deleteOrRestoreData =='Delete Data'? Icons.delete_forever_outlined: Entypo.clock,
                           color: Color(0xFFE5484D),
                         ),
                       ),
                     ),
-                    SizedBox(
+                    const SizedBox(
                       width: 5,
                     ),
                     Text(
-                      "Delete Data",
+                      deleteOrRestoreData,
                       style:
                           TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
                     )

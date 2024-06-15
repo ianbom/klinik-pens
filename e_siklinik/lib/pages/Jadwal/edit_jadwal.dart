@@ -13,10 +13,11 @@ class EditJadwal extends StatefulWidget {
 }
 
 class _EditJadwalState extends State<EditJadwal> {
-  final String apiGetAllDokter = "http://10.0.2.2:8000/api/dokter";
+  final String apiGetAllDokter = "http://192.168.239.136:8000/api/dokter";
   List<dynamic> dokterList = [];
   final _formKey = GlobalKey<FormState>();
   String? _selectedDokterId;
+  bool isLoading = false;
 
   final List<String> days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jum\'at'];
   late String _hariController;
@@ -29,9 +30,12 @@ class _EditJadwalState extends State<EditJadwal> {
     super.initState();
     _selectedDokterId = widget.jadwal['dokter_id'].toString();
     _hariController = widget.jadwal['hari'];
-    _jamMulaiController = TextEditingController(text: _formatTime(widget.jadwal['jadwal_mulai_tugas']));
-    _jamSelesaiController = TextEditingController(text: _formatTime(widget.jadwal['jadwal_selesai_tugas']));
-    _dokterNameController = TextEditingController(text: widget.jadwal['jadwal_to_dokter']['nama']);
+    _jamMulaiController = TextEditingController(
+        text: _formatTime(widget.jadwal['jadwal_mulai_tugas']));
+    _jamSelesaiController = TextEditingController(
+        text: _formatTime(widget.jadwal['jadwal_selesai_tugas']));
+    _dokterNameController =
+        TextEditingController(text: widget.jadwal['jadwal_to_dokter']['nama']);
     _getAllDokter();
   }
 
@@ -51,6 +55,9 @@ class _EditJadwalState extends State<EditJadwal> {
   }
 
   Future<void> _updateJadwalDokter() async {
+    setState(() {
+      isLoading = true;
+    });
     if (_selectedDokterId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -61,7 +68,8 @@ class _EditJadwalState extends State<EditJadwal> {
     }
 
     final id = widget.jadwal['id'];
-    final url = Uri.parse('http://10.0.2.2:8000/api/jadwal_dokter/update/$id');
+    final url =
+        Uri.parse('http://192.168.239.136:8000/api/jadwal_dokter/update/$id');
     final request = http.MultipartRequest('POST', url);
 
     request.fields['hari'] = _hariController;
@@ -108,6 +116,10 @@ class _EditJadwalState extends State<EditJadwal> {
       }
     } catch (error) {
       print('Error: $error');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
@@ -118,7 +130,8 @@ class _EditJadwalState extends State<EditJadwal> {
     return TimeOfDay(hour: hour, minute: minute);
   }
 
-  Future<void> _selectTime(BuildContext context, TextEditingController controller, bool isStartTime) async {
+  Future<void> _selectTime(BuildContext context,
+      TextEditingController controller, bool isStartTime) async {
     dynamic time = parseTimeOfDay(controller.text);
     final TimeOfDay? picked = await showTimePicker(
       context: context,
@@ -155,191 +168,205 @@ class _EditJadwalState extends State<EditJadwal> {
           style: TextStyle(fontWeight: FontWeight.w600),
         ),
       ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(8),
-          child: SingleChildScrollView(
-            child: Container(
-              margin: const EdgeInsets.only(left: 8, right: 8, bottom: 8),
-              padding: const EdgeInsets.all(16),
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: const BorderRadius.all(Radius.circular(15)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.5),
-                    offset: const Offset(-1, 2),
-                    blurRadius: 3,
-                    spreadRadius: 0,
+      body: Stack(
+        children: [
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: SingleChildScrollView(
+                child: Container(
+                  margin: const EdgeInsets.only(left: 8, right: 8, bottom: 8),
+                  padding: const EdgeInsets.all(16),
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: const BorderRadius.all(Radius.circular(15)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.5),
+                        offset: const Offset(-1, 2),
+                        blurRadius: 3,
+                        spreadRadius: 0,
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      "Informasi Dokter",
-                      style: TextStyle(
-                          fontWeight: FontWeight.w600, fontSize: 17),
-                    ),
-                    Container(
-                      height: 50,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 1),
-                      decoration: const BoxDecoration(
-                        borderRadius: BorderRadius.all(Radius.circular(15)),
-                        color: Color(0xFFEFF0F3),
-                      ),
-                      child: Center(
-                        child: TextFormField(
-                          controller: _dokterNameController,
-                          readOnly: true,
-                          decoration: const InputDecoration(
-                              border: InputBorder.none),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(
-                      height: 10,
-                    ),
-                    const Text(
-                      "Hari Tugas",
-                      style: TextStyle(
-                          fontWeight: FontWeight.w600, fontSize: 17),
-                    ),
-                    Container(
-                      height: 50,
-                      padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
-                      decoration: const BoxDecoration(
-                        borderRadius: BorderRadius.all(Radius.circular(15)),
-                        color: Color(0xFFEFF0F3),
-                      ),
-                      child: DropdownButtonFormField(
-                        value: _hariController,
-                        onChanged: (value) {
-                          setState(() {
-                            _hariController = value;
-                          });
-                        },
-                        items: days.map<DropdownMenuItem>((day) {
-                          return DropdownMenuItem(
-                            value: day,
-                            child: Text(day),
-                          );
-                        }).toList(),
-                        decoration: const InputDecoration(
-                            hintText: "Hari Tugas", border: InputBorder.none),
-                      ),
-                    ),
-                    const SizedBox(
-                      height: 10,
-                    ),
-                    const Text(
-                      "Jam Tugas",
-                      style: TextStyle(
-                          fontWeight: FontWeight.w600, fontSize: 17),
-                    ),
-                    Row(
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          flex: 1,
-                          child: Container(
-                            height: 50,
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 2),
-                            decoration: const BoxDecoration(
-                                borderRadius:
-                                    BorderRadius.all(Radius.circular(15)),
-                                color: Color(0xFFEFF0F3)),
+                        const Text(
+                          "Informasi Dokter",
+                          style: TextStyle(
+                              fontWeight: FontWeight.w600, fontSize: 17),
+                        ),
+                        Container(
+                          height: 50,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 1),
+                          decoration: const BoxDecoration(
+                            borderRadius: BorderRadius.all(Radius.circular(15)),
+                            color: Color(0xFFEFF0F3),
+                          ),
+                          child: Center(
                             child: TextFormField(
-                              controller: _jamMulaiController,
+                              controller: _dokterNameController,
                               readOnly: true,
-                              onTap: () =>
-                                  _selectTime(context, _jamMulaiController, true),
                               decoration: const InputDecoration(
-                                  hintText: "Jam Mulai",
                                   border: InputBorder.none),
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Jam mulai tidak boleh kosong';
-                                }
-                                return null;
-                              },
                             ),
                           ),
+                        ),
+                        const SizedBox(
+                          height: 10,
                         ),
                         const Text(
-                          " - ",
+                          "Hari Tugas",
                           style: TextStyle(
-                              fontSize: 24, fontWeight: FontWeight.w500),
+                              fontWeight: FontWeight.w600, fontSize: 17),
                         ),
-                        Expanded(
-                          flex: 1,
-                          child: Container(
-                            height: 50,
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 2),
-                            decoration: const BoxDecoration(
-                                borderRadius:
-                                    BorderRadius.all(Radius.circular(15)),
-                                color: Color(0xFFEFF0F3)),
-                            child: TextFormField(
-                              controller: _jamSelesaiController,
-                              readOnly: true,
-                              onTap: () =>
-                                  _selectTime(context, _jamSelesaiController, false),
-                              decoration: const InputDecoration(
-                                  hintText: "Jam Selesai",
-                                  border: InputBorder.none),
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Jam selesai tidak boleh kosong';
-                                }
-                                return null;
-                              },
-                            ),
+                        Container(
+                          height: 50,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 2),
+                          decoration: const BoxDecoration(
+                            borderRadius: BorderRadius.all(Radius.circular(15)),
+                            color: Color(0xFFEFF0F3),
+                          ),
+                          child: DropdownButtonFormField(
+                            value: _hariController,
+                            onChanged: (value) {
+                              setState(() {
+                                _hariController = value;
+                              });
+                            },
+                            items: days.map<DropdownMenuItem>((day) {
+                              return DropdownMenuItem(
+                                value: day,
+                                child: Text(day),
+                              );
+                            }).toList(),
+                            decoration: const InputDecoration(
+                                hintText: "Hari Tugas",
+                                border: InputBorder.none),
                           ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        ElevatedButton(
-                          onPressed: () {
-                            if (_formKey.currentState!.validate()) {
-                              _updateJadwalDokter();
-                            }
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF234DF0),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15.0),
+                        const SizedBox(
+                          height: 10,
+                        ),
+                        const Text(
+                          "Jam Tugas",
+                          style: TextStyle(
+                              fontWeight: FontWeight.w600, fontSize: 17),
+                        ),
+                        Row(
+                          children: [
+                            Expanded(
+                              flex: 1,
+                              child: Container(
+                                height: 50,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 2),
+                                decoration: const BoxDecoration(
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(15)),
+                                    color: Color(0xFFEFF0F3)),
+                                child: TextFormField(
+                                  controller: _jamMulaiController,
+                                  readOnly: true,
+                                  onTap: () => _selectTime(
+                                      context, _jamMulaiController, true),
+                                  decoration: const InputDecoration(
+                                      hintText: "Jam Mulai",
+                                      border: InputBorder.none),
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Jam mulai tidak boleh kosong';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                              ),
                             ),
-                          ),
-                          child: const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 12.0),
-                            child: Text(
-                              'Submit',
+                            const Text(
+                              " - ",
                               style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFFFCFCFD)),
+                                  fontSize: 24, fontWeight: FontWeight.w500),
                             ),
-                          ),
+                            Expanded(
+                              flex: 1,
+                              child: Container(
+                                height: 50,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 2),
+                                decoration: const BoxDecoration(
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(15)),
+                                    color: Color(0xFFEFF0F3)),
+                                child: TextFormField(
+                                  controller: _jamSelesaiController,
+                                  readOnly: true,
+                                  onTap: () => _selectTime(
+                                      context, _jamSelesaiController, false),
+                                  decoration: const InputDecoration(
+                                      hintText: "Jam Selesai",
+                                      border: InputBorder.none),
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Jam selesai tidak boleh kosong';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            ElevatedButton(
+                              onPressed: isLoading
+                                  ? null
+                                  : () {
+                                      if (_formKey.currentState!.validate()) {
+                                        _updateJadwalDokter();
+                                      }
+                                    },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF234DF0),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(15.0),
+                                ),
+                              ),
+                              child: const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 12.0),
+                                child: Text(
+                                  'Submit',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFFFCFCFD)),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
           ),
-        ),
+          if (isLoading)
+            Container(
+              color: Colors.black.withOpacity(0.5),
+              child: const Center(
+                child: CircularProgressIndicator(),
+              ),
+            ),
+        ],
       ),
     );
   }

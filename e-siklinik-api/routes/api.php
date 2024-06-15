@@ -39,9 +39,10 @@ Route::put('/user/{id}', [AuthController::class, 'Edit']);
 
 //PASIEN
 Route::get('/pasien', [PasienController::class, 'index'])->name('pasien.index');
+Route::get('/pasien/deleted-pasien', [PasienController::class, 'deletedPasien']);
 Route::post('/pasien/create', [PasienController::class, 'store'])->name('pasien.store');
 Route::put('/pasien/disabled/{id}', [PasienController::class, 'disablePasien'])->name('pasien.disabled');
-Route::post('/pasien/aktif/{id}', [PasienController::class, 'aktifPasien'])->name('pasien.aktif');
+Route::put('/pasien/aktif/{id}', [PasienController::class, 'aktifPasien'])->name('pasien.aktif');
 Route::get('/pasien/show/{id}', [PasienController::class, 'show'])->name('pasien.show');
 Route::post('/pasien/update/{id}', [PasienController::class, 'update'])->name('pasien.update');
 Route::delete('/pasien/delete/{id}', [PasienController::class, 'destroy'])->name('pasien.destroy');
@@ -55,6 +56,7 @@ Route::delete('/prodi/delete/{id}', [ProdiController::class, 'destroy'])->name('
 
 //ANTRIAN
 Route::get('/antrian', [AntrianController::class, 'index'])->name('antrian.index');
+Route::get('/antrianCount', [AntrianController::class, 'antrianCount'])->name('antrian.count');
 Route::get('/antrian/show/{id}', [AntrianController::class, 'show'])->name('antrian.show');
 Route::post('/antrian/create', [AntrianController::class, 'store'])->name('antrian.store');
 Route::get('/antrian/finished-assesmen', [AntrianController::class, 'finishedAssesmen']);
@@ -62,6 +64,8 @@ Route::get('/antrian/finished-assesmen', [AntrianController::class, 'finishedAss
 
 //DOKTER
 Route::get('/dokter', [DokterController::class, 'index'])->name('dokter.index');
+Route::get('/dokter/deleted-dokter', [DokterController::class, 'deletedDokter']);
+Route::put('/dokter/aktif/{id}', [DokterController::class, 'aktifDokter']);
 Route::post('/dokter/create', [DokterController::class, 'store'])->name('dokter.store');
 Route::put('/dokter/disabled/{id}', [DokterController::class, 'disabledDokter'])->name('dokter.disabled');
 Route::get('/dokter/show/{id}', [DokterController::class, 'show'])->name('dokter.show');
@@ -77,6 +81,8 @@ Route::delete('/jadwal_dokter/delete/{id}', [DokterController::class, 'deleteJad
 
 //OBAT Controller
 Route::get('/obat', [ObatController::class, 'index'])->name('obat.index');
+Route::get('/obat/deleted-obat', [ObatController::class, 'deletedObat']);
+Route::put('/obat/disabled/{id}', [ObatController::class, 'disableObat']);
 Route::get('/kategori-obat', [ObatController::class, 'getKategori']);
 Route::post('/obat/insert', [ObatController::class, 'store'])->name('obat.store');
 Route::post('/kategori-obat/insert', [ObatController::class, 'storeKategoriObat']);

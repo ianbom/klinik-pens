@@ -1,7 +1,7 @@
 // dialog_utils.dart
 import 'package:flutter/material.dart';
 
-void showDeleteConfirmationDialog(BuildContext context, VoidCallback onDelete) {
+void showDeleteConfirmationDialog(BuildContext context, VoidCallback onDelete, String customMessage) {
   showDialog(
     context: context,
     builder: (BuildContext context) {
@@ -17,16 +17,16 @@ void showDeleteConfirmationDialog(BuildContext context, VoidCallback onDelete) {
           'Warning!',
           style: TextStyle(fontWeight: FontWeight.w600),
         )),
-        content: const Column(
+        content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
+            const Text(
               'Are you sure you want to',
               style: TextStyle(fontWeight: FontWeight.w600),
             ),
-            Text('delete this item? This action',
-                style: TextStyle(fontWeight: FontWeight.w600)),
-            Text('cannot be undone.',
+            Text('$customMessage this item? This action',
+                style: const TextStyle(fontWeight: FontWeight.w600)),
+           const Text('cannot be undone.',
                 style: TextStyle(fontWeight: FontWeight.w600)),
           ],
         ),

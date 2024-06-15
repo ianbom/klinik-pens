@@ -1,114 +1,228 @@
-import 'package:flutter/cupertino.dart';
+import 'package:e_siklinik/components/box.dart';
+import 'package:e_siklinik/pages/Checkup/riwayat_checkup.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
-class DetailObat extends StatefulWidget {
-  const DetailObat({super.key});
+class ShowObat extends StatefulWidget {
+  final int obatId;
+  const ShowObat({Key? key, required this.obatId});
 
   @override
-  State<DetailObat> createState() => _DetailObatState();
+  State<ShowObat> createState() => _ShowObatState();
 }
 
-class _DetailObatState extends State<DetailObat> {
+class _ShowObatState extends State<ShowObat> {
+  Map<String, dynamic>? obatDetail;
+  bool isLoading = true;
+  bool hasError = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _getObatDetail();
+  }
+
+  Future<void> _getObatDetail() async {
+    try {
+      final response = await http.get(
+        Uri.parse("http://192.168.239.136:8000/api/obat/${widget.obatId}/show"),
+        headers: {'Content-Type': 'application/json'},
+      ).timeout(const Duration(seconds: 30));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data != null && data['obats'] != null) {
+          if (mounted) {
+            setState(() {
+              obatDetail = data['obats'];
+              isLoading = false;
+            });
+          }
+        } else {
+          if (mounted) {
+            setState(() {
+              hasError = true;
+              isLoading = false;
+            });
+          }
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            hasError = true;
+            isLoading = false;
+          });
+        }
+        print("Failed to load obat detail: ${response.statusCode}");
+      }
+    } catch (error) {
+      if (mounted) {
+        setState(() {
+          hasError = true;
+          isLoading = false;
+        });
+      }
+      print('Error: $error');
+    }
+  }
+
+  String _getImage(int kategoriObat) {
+    switch (kategoriObat) {
+      case 1:
+        return 'assets/images/OB.png';
+      case 2:
+        return 'assets/images/OBT.png';
+      case 3:
+        return 'assets/images/OK.png';
+      case 4:
+        return 'assets/images/ON.png';
+      case 5:
+        return 'assets/images/OJ.png';
+      case 6:
+        return 'assets/images/OH.png';
+      case 7:
+        return 'assets/images/OF.png';
+      default:
+        return 'assets/images/OD.png';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF9F9FB),
       appBar: AppBar(
-        surfaceTintColor: Colors.transparent,
-        title: Text(
-          "Detail Obat",
-          style: TextStyle(
-              fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
-        ),
-        centerTitle: true,
-        backgroundColor: Colors.white,
         leading: IconButton(
-          icon: Icon(Icons.arrow_left,
-              size: 50, color: Color.fromARGB(255, 0, 0, 0)),
           onPressed: () {
             Navigator.pop(context);
           },
+          icon: const Icon(Icons.arrow_back_ios),
         ),
-        actions: <Widget>[
-          IconButton(icon: Icon(Icons.more_vert), onPressed: () {  },)
-        ],
+        backgroundColor: Colors.white,
+        elevation: 2,
+        shadowColor: Colors.black,
+        centerTitle: true,
+        title: const Text(
+          "Detail Obat",
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
       ),
-      body: SingleChildScrollView(
-        child: Card(
-          // Set the shape of the card using a rounded rectangle border with a 8 pixel radius
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-          // Set the clip behavior of the card
-          clipBehavior: Clip.antiAliasWithSaveLayer,
-          // Define the child widgets of the card
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              // Display an image at the top of the card that fills the width of the card and has a height of 160 pixels
-              Image.asset(
-                ('assets/images/obat-detail.png'),
-                height: 160,
-                width: double.infinity,
-                fit: BoxFit.cover,
-              ),
-              // Add a container with padding that contains the card's title, text, and buttons
-              Container(
-                padding: const EdgeInsets.fromLTRB(15, 15, 15, 15),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Row(
-                      children: [
-                        CircleAvatar(
-                          backgroundColor: Colors.transparent,
-                          child: Image.asset(
-                            ('assets/images/JAMU.png'),
-                            fit: BoxFit.fill,
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : hasError
+              ? const Center(child: Text('Failed to load data'))
+              : NestedScrollView(
+                  headerSliverBuilder:
+                      (BuildContext context, bool innerBoxIsScrolled) {
+                    return <Widget>[
+                      SliverAppBar(
+                        automaticallyImplyLeading: false,
+                        expandedHeight: 300.0,
+                        floating: false,
+                        stretch: true,
+                        flexibleSpace: FlexibleSpaceBar(
+                          collapseMode: CollapseMode.parallax,
+                          background: obatDetail != null &&
+                                  obatDetail!['image'] != null
+                              ? Image.network(
+                                  'http://192.168.239.136:8000/storage/' +
+                                      obatDetail!['image'],
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Image.asset('assets/images/pp.png',
+                                        fit: BoxFit.cover);
+                                  },
+                                )
+                              : Image.asset(
+                                  'assets/images/pp.png',
+                                  fit: BoxFit.cover,
+                                ),
+                        ),
+                      ),
+                    ];
+                  },
+                  body: obatDetail != null
+                      ? Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: SingleChildScrollView(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(16),
+                                  width: double.infinity,
+                                  decoration: BoxDecoration(
+                                    color: const Color.fromARGB(
+                                        255, 244, 244, 244),
+                                    borderRadius: const BorderRadius.all(
+                                        Radius.circular(15)),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.grey.withOpacity(0.5),
+                                        offset: const Offset(-1, 2),
+                                        blurRadius: 3,
+                                        spreadRadius: 0,
+                                      ),
+                                    ],
+                                  ),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.center,
+                                        children: [
+                                          Image(
+                                            image: AssetImage(_getImage(
+                                                obatDetail!['kategori_id'])),
+                                            width: 15,
+                                          ),
+                                          const SizedBox(
+                                            width: 5,
+                                          ),
+                                          Text(
+                                            'Obat ${obatDetail!['obat_to_kategori_obat']['nama_kategori']}',
+                                            style: const TextStyle(
+                                                fontWeight: FontWeight.w600),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(
+                                        height: 15,
+                                      ),
+                                      Text(
+                                        '${obatDetail!['nama_obat']}',
+                                        style: const TextStyle(
+                                            fontSize: 24,
+                                            fontWeight: FontWeight.w600),
+                                      ),
+                                      const SizedBox(
+                                        height: 5,
+                                      ),
+                                      Text(
+                                          'Harga: Rp. ${obatDetail!['harga']}'),
+                                      const SizedBox(
+                                        height: 5,
+                                      ),
+                                      Text(
+                                          'Tanggal Kadaluarsa: ${obatDetail!['tanggal_kadaluarsa']}'),
+                                      const SizedBox(
+                                        height: 5,
+                                      ),
+                                      Text('Stock: ${obatDetail!['stock']}'),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        SizedBox(
-                          width: 10,
-                        ),
-                        Text(
-                          'Obat Jamu',
-                          style: TextStyle(
-                              fontSize: 20, fontWeight: FontWeight.bold),
                         )
-                      ],
-                    ),
-                    // Display the card's title using a font size of 24 and a dark grey color
-                    Text(
-                      "Paracetamol 500 mg",
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    // Add a space between the title and the text
-                    Container(height: 10),
-                    // Display the card's text using a font size of 15 and a light grey color
-                    Text(
-                      'Tanggal Kadaluarsa : DD/MM/YYYY',
-                      style: TextStyle(
-                        fontSize: 17,
-                      ),
-                    ),
-                    Text(
-                      'Stok : 999',
-                      style: TextStyle(
-                        fontSize: 17,
-                      ),
-                    ),
-                    // Add a row with two buttons spaced apart and aligned to the right side of the card
-                  ],
+                      : const Center(child: Text('No detail available')),
                 ),
-              ),
-              // Add a small space between the card and the next widget
-              Container(height: 5),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

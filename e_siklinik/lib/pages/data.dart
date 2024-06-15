@@ -3,6 +3,7 @@ import 'package:e_siklinik/pages/Dokter/data_dokter.dart';
 import 'package:e_siklinik/pages/Jadwal/data_jadwal.dart';
 import 'package:e_siklinik/pages/Obat/data_obat.dart';
 import 'package:e_siklinik/pages/Pasien/data_pasien.dart';
+import 'package:e_siklinik/pages/Recycled%20Data/recycled_data_main.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttericon/font_awesome_icons.dart';
 import 'package:fluttericon/rpg_awesome_icons.dart';
@@ -21,53 +22,55 @@ class _DataState extends State<Data> {
     return Scaffold(
       backgroundColor: const Color(0xFFF9F9FB),
       body: SafeArea(
-          maintainBottomViewPadding: true,
-          child: Padding(
-            padding: const EdgeInsets.only(left: 16, right: 16, top: 10),
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(
-                    height: 8,
-                  ),
-                  Container(
-                    decoration: BoxDecoration(
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.5),
-                            offset: const Offset(-1, 2),
-                            blurRadius: 3,
-                            spreadRadius: 0,
-                          ),
-                        ],
-                        border: Border.all(
-                            color: const Color(0xFF234DF0), width: 2),
-                        borderRadius:
-                            const BorderRadius.all(Radius.circular(15)),
-                        image: const DecorationImage(
-                            image: AssetImage('assets/images/BannerData.jpeg'),
-                            fit: BoxFit.fill)),
-                    width: double.infinity,
-                    height: 150,
-                    child: const Center(),
-                  ),
-                  const SizedBox(
-                    height: 20,
-                  ),
-                  const Text(
-                    "Database",
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
-                  ),
-                  Column(
-                    children: [
-                      const SizedBox(
-                        height: 8,
+        maintainBottomViewPadding: true,
+        child: Padding(
+          padding: const EdgeInsets.only(left: 16, right: 16, top: 10, bottom: 27),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(
+                height: 8,
+              ),
+              Container(
+                decoration: BoxDecoration(
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.5),
+                        offset: const Offset(-1, 2),
+                        blurRadius: 3,
+                        spreadRadius: 0,
                       ),
+                    ],
+                    border: Border.all(
+                        color: const Color(0xFF234DF0), width: 2),
+                    borderRadius:
+                        const BorderRadius.all(Radius.circular(15)),
+                    image: const DecorationImage(
+                        image: AssetImage('assets/images/BannerData.jpeg'),
+                        fit: BoxFit.fill)),
+                width: double.infinity,
+                height: 150,
+                child: const Center(),
+              ),
+              const SizedBox(
+                height: 20,
+              ),
+              const Text(
+                "Database",
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(
+                height: 5,
+              ),
+              const Divider(),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
                       Box(
                         title: "Pasien",
                         desc: "Add, Edit, Delete Data\nPasien",
-                        bgimage: '',
+                        bgimage: 'assets/images/bgpolos.png',
                         icon: setIcon(
                             Icons.person_outline, const Color(0xFF234DF0)),
                         onTapBox: () {
@@ -80,7 +83,7 @@ class _DataState extends State<Data> {
                       Box(
                         title: "Dokter",
                         desc: "Add, Edit, Delete Data\nDokter",
-                        bgimage: '',
+                        bgimage: 'assets/images/bgpolos.png',
                         icon: setIcon(
                             FontAwesome.stethoscope, const Color(0xFF234DF0)),
                         onTapBox: () {
@@ -93,7 +96,7 @@ class _DataState extends State<Data> {
                       Box(
                         title: "Obat",
                         desc: "Add, Edit, Delete Data\nObat",
-                        bgimage: '',
+                        bgimage: 'assets/images/bgpolos.png',
                         icon: setIcon(RpgAwesome.pill, const Color(0xFF234DF0)),
                         onTapBox: () {
                           Navigator.push(
@@ -105,24 +108,38 @@ class _DataState extends State<Data> {
                       Box(
                           title: "Jadwal Dokter",
                           desc: "Add, Edit, Delete Data\nJadwal Dokter",
-                          bgimage: '',
+                          bgimage: 'assets/images/bgpolos.png',
+                          icon: setIcon(
+                              Icons.access_time, const Color(0xFF234DF0)),
+                          onTapBox: () {
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => const DataJadwal()));
+                          }),
+                      Box(
+                          title: "Data Terhapus",
+                          desc: "Data pasien, obat, dan dokter yang terhapus",
+                          bgimage: 'assets/images/bgpolos.png',
                           icon: setIcon(
                               Entypo.back_in_time, const Color(0xFF234DF0)),
                           onTapBox: () {
                             Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                    builder: (context) => const DataJadwal()));
-                          })
+                                    builder: (context) => const RecycledDataMain()));
+                          }),
+                          const SizedBox(
+                            height: 70,
+                          )
                     ],
                   ),
-                  const SizedBox(
-                    height: 70,
-                  )
-                ],
+                ),
               ),
-            ),
-          )),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

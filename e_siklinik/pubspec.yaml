@@ -48,6 +48,11 @@ dependencies:
   shared_preferences: ^2.2.3
   carousel_slider: ^4.2.1
   rolling_bottom_bar: ^0.2.2
+  shimmer: ^3.0.0
+  flutter_launcher_icons: ^0.13.1
+  syncfusion_flutter_charts: ^25.2.6
+  pdf: ^3.8.0
+  printing: ^5.7.2
 
 dev_dependencies:
   flutter_test:
@@ -59,6 +64,12 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^2.0.0
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/images/logo.jpeg"
+  min_sdk_android: 21 # android min sdk min:16, default 21
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

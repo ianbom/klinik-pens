@@ -6,7 +6,7 @@ import 'add_antrian.dart';
 import 'package:e_siklinik/pages/Assessment/add_assessment.dart';
 
 class ListAntrianNew extends StatefulWidget {
-  const ListAntrianNew({super.key});
+  const ListAntrianNew({Key? key}) : super(key: key);
 
   @override
   State<ListAntrianNew> createState() => _ListAntrianNewState();
@@ -22,7 +22,10 @@ class _ListAntrianNewState extends State<ListAntrianNew> {
   CalendarFormat _calendarFormat = CalendarFormat.week;
   int counter = 0;
 
-  final String apiGetAntrian = "http://10.0.2.2:8000/api/antrian";
+  final String apiGetAntrian = "http://192.168.239.136:8000/api/antrian";
+
+  // Variabel untuk melacak apakah sedang loading data
+  bool isLoading = false;
 
   @override
   void initState() {
@@ -30,39 +33,58 @@ class _ListAntrianNewState extends State<ListAntrianNew> {
     _focusedDay = DateTime.now();
     _selectedDay = selectedDate;
     _getFinishedAssesmen();
-    _getAllAntrian();
-
+    _loadAntrianData();
   }
 
-  Future<void> _getFinishedAssesmen()async{
-    Uri finishedUrl = Uri.parse('http://10.0.2.2:8000/api/antrian/finished-assesmen');
-    try{
-      final response = await http.get(finishedUrl);
-      if(response.statusCode ==200){
-        final data = json.decode(response.body);
-        finishedAssesmen = data['results'];
-      }
+  // Fungsi untuk memuat data antrian
+  Future<void> _loadAntrianData() async {
+    // Menandakan bahwa aplikasi sedang memuat data
+    setState(() {
+      isLoading = true;
+    });
 
-    }catch(error){
-      print('Error: $error');
-    }
-  }
-
-  Future<void> _getAllAntrian() async {
     try {
+      // Memuat data antrian
       final response = await http.get(Uri.parse(apiGetAntrian));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data != null && data['antrian'] != null) {
-          setState(() {
-            antrianList = data['antrian'];
-            _filterAntrianByDate();
-          });
+          if (mounted) {
+            setState(() {
+              antrianList = data['antrian'];
+              _filterAntrianByDate();
+            });
+          }
         } else {
           print("No data received from API");
         }
       } else {
         print("Failed to load antrian");
+      }
+    } catch (error) {
+      print('Error: $error');
+    } finally {
+      if (mounted) {
+        // Menandakan bahwa proses loading data telah selesai
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _getFinishedAssesmen() async {
+    Uri finishedUrl =
+        Uri.parse('http://192.168.239.136:8000/api/antrian/finished-assesmen');
+    try {
+      final response = await http.get(finishedUrl);
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (mounted) {
+          setState(() {
+            finishedAssesmen = data['results'];
+          });
+        }
       }
     } catch (error) {
       print('Error: $error');
@@ -88,7 +110,13 @@ class _ListAntrianNewState extends State<ListAntrianNew> {
   }
 
   Future<void> _refreshData() async {
-    await _getAllAntrian();
+    await _loadAntrianData();
+  }
+
+  @override
+  void dispose() {
+    // Cleanup resources if needed
+    super.dispose();
   }
 
   @override
@@ -101,11 +129,11 @@ class _ListAntrianNewState extends State<ListAntrianNew> {
               builder: (context) => AddAntrian(),
             ),
           );
-          if (result == true){
+          if (result == true) {
             _refreshData();
           }
         },
-        child: Icon(Icons.add, size: 30, color: Colors.white),
+        child: Icon(Icons.add, size: 35, color: Colors.white),
         backgroundColor: Color(0xFF234DF0),
         elevation: 8,
         shape: RoundedRectangleBorder(
@@ -113,85 +141,115 @@ class _ListAntrianNewState extends State<ListAntrianNew> {
         ),
       ),
       appBar: AppBar(
-        title: Text('Daftar Antrian'),
+        leading: IconButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            icon: const Icon(Icons.arrow_back_ios)),
+        backgroundColor: Colors.white,
+        elevation: 2,
+        shadowColor: Colors.black,
+        centerTitle: true,
+        title: const Text(
+          "Antrian",
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
       ),
       body: Column(
         children: [
           _buildCalendarHeader(),
           _buildCalendar(),
           Expanded(
-              child: filteredAntrianList.isEmpty
-                  ? const Center(
-                      child: Text(
-                        'Antrian Kosong',
-                        style: TextStyle(fontSize: 18.0),
-                      ),
-                    )
-                  : ListView.builder(
-                      itemCount: filteredAntrianList.length,
-                      itemBuilder: (BuildContext context, int index) {
-                        final antrian = filteredAntrianList[index];
-                        final antrianId = antrian['id'];
-                        bool antrianState = false;
-                        antrianState = antrian['status'] != 'Belum' ;
-                        return Card(
-                          margin:
-                              const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
+            child: isLoading
+                ? Center(
+                    child:
+                        CircularProgressIndicator(), // Menampilkan loading indicator
+                  )
+                : filteredAntrianList.isEmpty
+                    ? Center(
+                        child: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 32),
+                          child: Image.asset(
+                            'assets/images/antrian_kosong.png',
+                            fit: BoxFit.cover,
                           ),
-                          elevation: 4,
-                          child: ListTile(
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 12),
-                            leading: CircleAvatar(
-
-                              backgroundColor: Colors.blue,
-                              child: Text(
-                                antrian['no_antrian'].toString(),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: filteredAntrianList.length + 1,
+                        itemBuilder: (BuildContext context, int index) {
+                          if (index == filteredAntrianList.length) {
+                            return const SizedBox(height: 50);
+                          } else {
+                            final antrian = filteredAntrianList[index];
+                            final antrianId = antrian['id'];
+                            bool antrianState = false;
+                            antrianState = antrian['status'] != 'Belum';
+                            return Card(
+                              margin: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 8),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
                               ),
-                            ),
-                            title: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                antrianStateWidget(antrian['status']),
-                                Text(
-                                  antrian['antrian_to_pasien']['nama'],
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            subtitle: Text(
-                              'Antrian Nomor: ${antrian['no_antrian']}',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                            trailing: antrianState ?  SizedBox(width: 1, height: 1,): IconButton(
-                              icon: Icon(Icons.add),
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => AddAssessment(
-                                      antrianId: antrianId,
+                              elevation: 4,
+                              child: ListTile(
+                                  contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 12),
+                                  leading: CircleAvatar(
+                                    backgroundColor: Colors.blue,
+                                    child: Text(
+                                      antrian['no_antrian'].toString(),
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
-                                );
-                              },
-                            )
-                          ),
-                        );
-                      },
-                    )),
+                                  title: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      antrianStateWidget(antrian['status']),
+                                      Text(
+                                        antrian['antrian_to_pasien']['nama'],
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  subtitle: Text(
+                                    'Antrian Nomor: ${antrian['no_antrian']}',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                  trailing: antrianState
+                                      ? SizedBox(
+                                          width: 1,
+                                          height: 1,
+                                        )
+                                      : IconButton(
+                                          icon: Icon(Icons.add),
+                                          onPressed: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    AddAssessment(
+                                                  antrianId: antrianId,
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        )),
+                            );
+                          }
+                        },
+                      ),
+          ),
         ],
       ),
     );
@@ -302,16 +360,17 @@ class _ListAntrianNewState extends State<ListAntrianNew> {
   }
 }
 
-Widget antrianStateWidget(String state){
-  Color stateColor =  Colors.red;
+Widget antrianStateWidget(String state) {
+  Color stateColor = Colors.red;
   String stateText = 'Dalam Antrian';
 
-  switch(state){
-    case 'Sedang' : stateColor = Colors.yellow;
-    stateText = 'Dalam Pemeriksaan';
-    break;
+  switch (state) {
+    case 'Sedang':
+      stateColor = Colors.yellow;
+      stateText = 'Dalam Pemeriksaan';
+      break;
     case 'Selesai':
-      stateColor= Colors.green;
+      stateColor = Colors.green;
       stateText = 'Sudah Ditangani';
       break;
     default:
@@ -320,7 +379,12 @@ Widget antrianStateWidget(String state){
 
   return Row(
     children: [
-      Container(width: 10, height: 10,decoration: BoxDecoration(color: stateColor,borderRadius: BorderRadius.circular(50)),),
+      Container(
+        width: 10,
+        height: 10,
+        decoration: BoxDecoration(
+            color: stateColor, borderRadius: BorderRadius.circular(50)),
+      ),
       Container(
         margin: EdgeInsets.only(left: 7),
         child: Text(

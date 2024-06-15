@@ -28,7 +28,8 @@ class _ShowPasienState extends State<ShowPasien> {
   Future<void> _getPasienDetail() async {
     try {
       final response = await http.get(
-        Uri.parse("http://10.0.2.2:8000/api/pasien/show/${widget.pasienId}"),
+        Uri.parse(
+            "http://192.168.239.136:8000/api/pasien/show/${widget.pasienId}"),
         headers: {'Content-Type': 'application/json'},
       ).timeout(const Duration(seconds: 30));
 
@@ -72,7 +73,7 @@ class _ShowPasienState extends State<ShowPasien> {
   Future<void> _getRiwayatCheckup() async {
     try {
       final response = await http.get(Uri.parse(
-          "http://10.0.2.2:8000/api/riwayat-pasien/${widget.pasienId}"));
+          "http://192.168.239.136:8000/api/riwayat-pasien/${widget.pasienId}"));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data != null && data['checkup'] != null) {
@@ -137,7 +138,7 @@ class _ShowPasienState extends State<ShowPasien> {
                           background: pasienDetail != null &&
                                   pasienDetail!['image'] != null
                               ? Image.network(
-                                  'http://10.0.2.2:8000/storage/' +
+                                  'http://192.168.239.136:8000/storage/' +
                                       pasienDetail!['image'],
                                   fit: BoxFit.cover,
                                   errorBuilder: (context, error, stackTrace) {
@@ -221,12 +222,15 @@ class _ShowPasienState extends State<ShowPasien> {
                                   ),
                                 ),
                                 const SizedBox(
-                                  height: 10,
+                                  height: 20,
                                 ),
                                 const Text(
                                   "Riwayat Checkup",
-                                  style: TextStyle(fontWeight: FontWeight.w600),
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 20),
                                 ),
+                                Divider(),
                                 const SizedBox(
                                   height: 10,
                                 ),
@@ -241,7 +245,7 @@ class _ShowPasienState extends State<ShowPasien> {
                                                     ['assesmen_to_antrian']
                                                 ?['no_antrian'] ??
                                             '';
-                                                                                final checkupId = checkup['id'];
+                                    final checkupId = checkup['id'];
 
                                     final namaDokter =
                                         checkup['check_up_resul_to_assesmen']
@@ -257,10 +261,11 @@ class _ShowPasienState extends State<ShowPasien> {
                                                     RiwayatCheckup(
                                                         checkupId: checkupId)));
                                       },
-                                      tanggal:
-                                          checkup['created_at'] != null ? extractDate(checkup['created_at']) : 'N/A',
-                                      nama:
-                                          'Nama Dokter: $namaDokter', no: '$nomorAntrian',
+                                      tanggal: checkup['created_at'] != null
+                                          ? extractDate(checkup['created_at'])
+                                          : 'N/A',
+                                      nama: 'Nama Dokter: $namaDokter',
+                                      no: '$nomorAntrian',
                                     );
                                     // Card(
                                     //   child: ListTile(

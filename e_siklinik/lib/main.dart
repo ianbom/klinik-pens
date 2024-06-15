@@ -1,10 +1,17 @@
 import 'package:e_siklinik/control.dart';
 import 'package:e_siklinik/pages/login.dart';
+import 'package:e_siklinik/testing/grafik/grafik_obat.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/services.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown
+  ]);
   runApp(const MyApp());
 }
 
@@ -37,6 +44,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+        debugShowCheckedModeBanner: false,
         home: 
         ControlPage());
         // haveCookie ? const ControlPage() : const LoginPage());

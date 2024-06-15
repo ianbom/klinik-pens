@@ -21,7 +21,7 @@ class _EditDokterState extends State<EditDokter> {
   final TextEditingController imageController = TextEditingController();
   String? selectedGender;
   File? _imageFile;
-  final List<String> genders = ["Laki-laki", "Perempuan"];
+  final List<String> genders = ["Laki-Laki", "Perempuan"];
 
   @override
   void initState() {
@@ -46,7 +46,7 @@ class _EditDokterState extends State<EditDokter> {
 
   Future<void> _updateDokter() async {
     final id = widget.dokter['id'];
-    final url = Uri.parse('http://10.0.2.2:8000/api/dokter/update/$id');
+    final url = Uri.parse('http://192.168.239.136:8000/api/dokter/update/$id');
     final request = http.MultipartRequest('POST', url);
 
     // Menambahkan data yang akan diperbarui

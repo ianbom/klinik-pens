@@ -22,7 +22,7 @@ class _ShowObatPageState extends State<ShowObatPage> {
   Future<void> _getObatDetail() async {
     try {
       final response = await http.get(
-        Uri.parse("http://10.0.2.2:8000/api/obat/${widget.obatId}/show"),
+        Uri.parse("http://192.168.239.136:8000/api/obat/${widget.obatId}/show"),
       );
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -54,7 +54,8 @@ class _ShowObatPageState extends State<ShowObatPage> {
                 children: [
                   CircleAvatar(
                     backgroundImage: NetworkImage(
-                      'http://10.0.2.2:8000/storage/' + obatDetail!['image'],
+                      'http://192.168.239.136:8000/storage/' +
+                          obatDetail!['image'],
                     ),
                   ),
                   Text('Nama Obat: ${obatDetail!['nama_obat']}'),

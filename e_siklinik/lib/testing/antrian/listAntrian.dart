@@ -14,7 +14,7 @@ class AntrianListPage extends StatefulWidget {
 
 class _AntrianListPageState extends State<AntrianListPage> {
   List<dynamic> antrianList = [];
-  final String apiGetAntrian = "http://10.0.2.2:8000/api/antrian";
+  final String apiGetAntrian = "http://192.168.239.136:8000/api/antrian";
 
   @override
   void initState() {

@@ -1,5 +1,6 @@
 class JadwalDokter {
   final int id;
+  final String nama;
   final String hari;
   final String jadwalMulaiTugas;
   final String jadwalSelesaiTugas;
@@ -9,6 +10,7 @@ class JadwalDokter {
 
   JadwalDokter({
     required this.id,
+    required this.nama,
     required this.hari,
     required this.jadwalMulaiTugas,
     required this.jadwalSelesaiTugas,
@@ -20,6 +22,7 @@ class JadwalDokter {
   factory JadwalDokter.fromJson(Map<String, dynamic> json) {
     return JadwalDokter(
       id: json['id'],
+      nama: json['nama'],
       hari: json['hari'],
       jadwalMulaiTugas: json['jadwal_mulai_tugas'],
       jadwalSelesaiTugas: json['jadwal_selesai_tugas'],

@@ -24,6 +24,12 @@ class DokterController extends Controller
             return response()->json(['message' => 'Succes tampil dokter', 'dokter' => $dokter]);
       }
 
+      public function deletedDokter()
+      {
+            $dokter = Dokter::with('dokterToJadwal')->where('is_disabled', '=', true)->get();
+            return response()->json(['message' => "Data dokter yang terhapus", 'dokter' => $dokter]);
+      }
+
       /**
        * Show the form for creating a new resource.
        */
@@ -136,18 +142,26 @@ class DokterController extends Controller
       public function destroy(string $id)
       {
             $dokter = Dokter::findOrFail($id);
-            $dokter->delete();
+            $dokter->is_disabled = true;
+            $dokter->save();
             return response()->json(['message' => 'Success delete data dokter']);
       }
 
       // Jadwal Dokter
 
       public function indexJadwal()
-      {
-            $jadwal_dokter = JadwalDokter::with('jadwalToDokter')->get();
+{
+    $jadwal_dokter = JadwalDokter::with(['jadwalToDokter' => function ($query) {
+        $query->where('is_disabled', false);
+    }])
+    ->whereHas('jadwalToDokter', function ($query) {
+        $query->where('is_disabled', false);
+    })
+    ->get();
 
-            return response()->json(['message' => 'Success tampil jadwal dokter', 'jadwal_dokter' => $jadwal_dokter]);
-      }
+    return response()->json(['message' => 'Success tampil jadwal dokter', 'jadwal_dokter' => $jadwal_dokter]);
+}
+
       public function jadwalToday(String $day)
       {
             try {
@@ -201,6 +215,16 @@ class DokterController extends Controller
             return response()->json(['message' => 'Success delete data jadwal dokter']);
       }
 
+      public function aktifDokter($id)
+      {
+            $dokter = Dokter::find($id);
+            if ($dokter->is_disabled == true) {
+                  $dokter->is_disabled = false;
+                  $dokter->save();
+                  return response()->json(['message' => 'Success aktifkan data dokter']);
+            }
+      }
+
       public function disabledDokter($id)
       {
             $dokter = Dokter::find($id);
@@ -208,11 +232,6 @@ class DokterController extends Controller
                   $dokter->is_disabled = true;
                   $dokter->save();
                   return response()->json(['message' => 'Success disable data dokter']);
-            }
-            if ($dokter->is_disabled == true) {
-                  $dokter->is_disabled = false;
-                  $dokter->save();
-                  return response()->json(['message' => 'Success aktifkan data dokter']);
             }
       }
 }

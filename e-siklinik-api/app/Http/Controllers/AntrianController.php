@@ -15,8 +15,22 @@ class AntrianController extends Controller
       public function index()
       {
             $antrian = AntrianTable::with('antrianToPasien')->get();
+
             return response()->json(['message' => 'Succes tampil antrian', 'antrian' => $antrian]);
       }
+
+
+
+    public function antrianCount()
+    {
+    $antrian = AntrianTable::with('antrianToPasien')
+        ->select(DB::raw('DATE(created_at) as tanggal'), DB::raw('count(*) as jumlah_antrian'))
+        ->groupBy(DB::raw('DATE(created_at)'))
+        ->get();
+
+    return response()->json(['message' => 'Success tampil antrian', 'antrian' => $antrian]);
+    }
+
 
       /**
        * Show the form for creating a new resource.
@@ -31,20 +45,27 @@ class AntrianController extends Controller
        * Store a newly created resource in storage.
        */
       public function store(Request $request)
-      {
+{
+    try {
+
+        $currentDate = date('Y-m-d');
+
+        $countToday = AntrianTable::whereDate('created_at', $currentDate)->count();
+
+        $noAntrian = $countToday + 1;
 
 
-            try {
-                  AntrianTable::create([
-                        'pasien_id' => $request->pasien_id,
-                        'no_antrian' => $request->no_antrian,
-                        'status' => 'Belum'
-                  ]);
-                  return response()->json(["status" => 200, "messasge" => "Nomor antrian "]);
-            } catch (Exception $exception) {
-                  return response()->json(["status" => 500, "messasge" => "Error: " . $exception]);
-            }
-      }
+        AntrianTable::create([
+            'pasien_id' => $request->pasien_id,
+            'no_antrian' => $noAntrian,
+            'status' => 'Belum'
+        ]);
+
+        return response()->json(["status" => 200, "message" => "Nomor antrian $noAntrian"]);
+    } catch (Exception $exception) {
+        return response()->json(["status" => 500, "message" => "Error: " . $exception->getMessage()]);
+    }
+}
 
       /**
        * Display the specified resource.

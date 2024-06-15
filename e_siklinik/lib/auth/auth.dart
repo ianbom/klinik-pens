@@ -33,7 +33,7 @@ class Auth {
 
   static Future<Auth> postLogin(
       {required String email, required String password}) async {
-    Uri url = Uri.parse('http://10.0.2.2:8000/api/login');
+    Uri url = Uri.parse('http://192.168.239.136:8000/api/login');
     var response =
         await http.post(url, body: {"email": email, "password": password});
     var jsonObject = json.decode(response.body);

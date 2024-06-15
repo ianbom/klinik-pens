@@ -1,6 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
+import 'package:pdf/pdf.dart';
+import 'dart:typed_data';
 
 class RiwayatCheckup extends StatefulWidget {
   final int checkupId;
@@ -23,7 +27,7 @@ class _RiwayatCheckupState extends State<RiwayatCheckup> {
     try {
       final response = await http.get(
         Uri.parse(
-            "http://10.0.2.2:8000/api/checkup-result/show/${widget.checkupId}"),
+            "http://192.168.239.136:8000/api/checkup-result/show/${widget.checkupId}"),
       );
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -41,6 +45,116 @@ class _RiwayatCheckupState extends State<RiwayatCheckup> {
     } catch (error) {
       print('Error: $error');
     }
+  }
+
+  void _showImage(String imageUrl) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+            child: checkupDetail!['url_file'] != null
+                ? Image.network('http://192.168.239.136:8000/storage/' +
+                    checkupDetail!['url_file'])
+                : Container(
+                    width: double.infinity,
+                    height: 200,
+                    color: Colors.grey[200],
+                    child: const Icon(
+                      Icons.image,
+                      size: 100,
+                      color: Colors.grey,
+                    ),
+                  ));
+      },
+    );
+  }
+
+  Future<void> _generatePdf() async {
+    final pdf = pw.Document();
+
+    // Fetch image if exists
+    pw.Widget? imageWidget;
+    if (checkupDetail!['url_file'] != null) {
+      final imageUrl =
+          'http://192.168.239.136:8000/storage/${checkupDetail!['url_file']}';
+      final response = await http.get(Uri.parse(imageUrl));
+      if (response.statusCode == 200) {
+        final Uint8List imageData = response.bodyBytes;
+        final image = pw.MemoryImage(imageData);
+        imageWidget = pw.Image(image);
+      }
+    }
+
+    pdf.addPage(
+      pw.Page(
+        build: (pw.Context context) {
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text(
+                "Riwayat Check Up",
+                style:
+                    pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold),
+              ),
+              pw.SizedBox(height: 20),
+              pw.Text("Tanggal Check Up: ${checkupDetail!['created_at']}"),
+              pw.SizedBox(height: 15),
+              pw.Text("Informasi Pasien:"),
+              _buildPatientInfo(),
+              pw.SizedBox(height: 15),
+              pw.Text(
+                  "Informasi Dokter: ${checkupDetail!["nama_dokter, dokter.id"]}"),
+              pw.SizedBox(height: 15),
+              pw.Text("Hasil Check Up:"),
+              pw.Text("${checkupDetail!['hasil_diagnosa']}"),
+              if (imageWidget != null) ...[
+                pw.SizedBox(height: 15),
+                pw.Text("Lampiran:"),
+                imageWidget,
+              ],
+              pw.SizedBox(height: 15),
+              pw.Text("Resep Obat:"),
+              ..._buildResepObatPdfList(),
+            ],
+          );
+        },
+      ),
+    );
+
+    await Printing.layoutPdf(
+        onLayout: (PdfPageFormat format) async => pdf.save());
+  }
+
+  pw.Widget _buildPatientInfo() {
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Text("NRP: ${checkupDetail!['pasien_nrp']}"),
+        pw.Text("Nama: ${checkupDetail!['nama_pasien']}"),
+        pw.Text("Program Studi: ${checkupDetail!['nama']}"),
+        pw.Text("Gender: ${checkupDetail!['pasien_gender']}"),
+        pw.Text("Tanggal Lahir: ${checkupDetail!['tanggal_lahir_pasien']}"),
+        pw.Text("Alamat: ${checkupDetail!['pasien_address']}"),
+        pw.Text("No Hp: ${checkupDetail!['pasien_phone_no']}"),
+        pw.Text("No Wali: ${checkupDetail!['pasien_wali_no']}"),
+      ],
+    );
+  }
+
+  List<pw.Widget> _buildResepObatPdfList() {
+    List<pw.Widget> resepObatWidgets = [];
+    if (checkupDetail != null && checkupDetail!['detail_resep_obats'] != null) {
+      int index = 1;
+      for (var detail in checkupDetail!['detail_resep_obats']) {
+        resepObatWidgets.add(
+          pw.Text(
+            "$index. ${detail['nama_obat']} - ${detail['detail_jumlah_pemakaian']}x${detail['detail_waktu_pemakaian']} Hari",
+          ),
+        );
+        index++;
+      }
+    }
+    return resepObatWidgets;
   }
 
   @override
@@ -62,6 +176,12 @@ class _RiwayatCheckupState extends State<RiwayatCheckup> {
           "Riwayat Check Up",
           style: TextStyle(fontWeight: FontWeight.w600),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.picture_as_pdf),
+            onPressed: _generatePdf,
+          ),
+        ],
       ),
       body: checkupDetail != null
           ? SingleChildScrollView(
@@ -85,13 +205,20 @@ class _RiwayatCheckupState extends State<RiwayatCheckup> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         setInfoPasien("NRP", "${checkupDetail!['pasien_nrp']}"),
-                        setInfoPasien("Nama", "${checkupDetail!['nama_pasien']}"),
-                        setInfoPasien("Program Studi", "${checkupDetail!['nama']}"),
-                        setInfoPasien("Gender", "${checkupDetail!['pasien_gender']}"),
-                        setInfoPasien("Tanggal Lahir", "${checkupDetail!['tanggal_lahir_pasien']}"),
-                        setInfoPasien("Alamat", "${checkupDetail!['pasien_address']}"),
-                        setInfoPasien("No Hp", "${checkupDetail!['pasien_phone_no']}"),
-                        setInfoPasien("No Wali", "${checkupDetail!['pasien_wali_no']}"),
+                        setInfoPasien(
+                            "Nama", "${checkupDetail!['nama_pasien']}"),
+                        setInfoPasien(
+                            "Program Studi", "${checkupDetail!['nama']}"),
+                        setInfoPasien(
+                            "Gender", "${checkupDetail!['pasien_gender']}"),
+                        setInfoPasien("Tanggal Lahir",
+                            "${checkupDetail!['tanggal_lahir_pasien']}"),
+                        setInfoPasien(
+                            "Alamat", "${checkupDetail!['pasien_address']}"),
+                        setInfoPasien(
+                            "No Hp", "${checkupDetail!['pasien_phone_no']}"),
+                        setInfoPasien(
+                            "No Wali", "${checkupDetail!['pasien_wali_no']}"),
                       ],
                     ),
                   ),
@@ -120,12 +247,16 @@ class _RiwayatCheckupState extends State<RiwayatCheckup> {
                           ),
                         ),
                         const SizedBox(height: 5),
-                        Container(
-                          width: double.infinity,
-                          height: 125,
-                          decoration: const BoxDecoration(
-                            borderRadius: BorderRadius.all(Radius.circular(15)),
-                            color: Colors.grey,
+                        ElevatedButton(
+                          style: const ButtonStyle(
+                              backgroundColor:
+                                  MaterialStatePropertyAll(Color(0xFFEFF0F3))),
+                          onPressed: () {
+                            _showImage(checkupDetail!['url_file']);
+                          },
+                          child: const Text(
+                            'Lihat Lampiran',
+                            style: TextStyle(color: Colors.black87),
                           ),
                         ),
                       ],

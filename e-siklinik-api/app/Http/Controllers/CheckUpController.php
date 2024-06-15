@@ -317,57 +317,73 @@ class CheckUpController extends Controller
       }
 
       public function storeCheckupWithResepObat(Request $request)
-      {
-            DB::beginTransaction();
+{
+    DB::beginTransaction();
 
-            try {
-                  $path = null;
-                  if ($request->hasFile('image')) {
-                        $file = $request->file('image');
-                        $path = time() . '_' . $file->getClientOriginalExtension();
-                        $uploadRes = Storage::disk('local')->put('public/' . $path, file_get_contents($file));
+    try {
+        $path = null;
+        if ($request->hasFile('image')) {
+            $file = $request->file('image');
+            $path = time() . '_' . $file->getClientOriginalExtension();
+            $uploadRes = Storage::disk('local')->put('public/' . $path, file_get_contents($file));
 
-                        if ($uploadRes === false) {
-                              throw new Exception("Upload gambar gagal", 500);
-                        }
-                  }
-
-                  $checkupResult = CheckUpResult::create([
-                        'assesmen_id' => $request->assesmen_id,
-                        'hasil_diagnosa' => $request->hasil_diagnosa,
-                        'url_file' => $path,
-                  ]);
-
-                  if ($checkupResult) {
-                        $resepObatList = json_decode($request->resep_obat, true);
-
-                        foreach ($resepObatList as $resep) {
-                              DetailResepObat::create([
-                                    'obat_id' => $resep['obat_id'],
-                                    'checkup_id' => $checkupResult->id,
-                                    'jumlah_pemakaian' => $resep['jumlah_pemakaian'],
-                                    'waktu_pemakaian' => $resep['waktu_pemakaian'],
-                              ]);
-                        }
-
-                        DB::commit();
-                        $antrianId = DB::table('checkup_assesmens')
-                              ->where('checkup_assesmens.id', $request->assesmen_id)
-                              ->value('antrian_id'); // Use value() to directly get the antrian_id
-
-                        if ($antrianId) {
-                              // Find the corresponding antrian record and update its status
-                              $res = AntrianTable::findOrFail($antrianId);
-                              $res->status = 'Selesai';
-                              $res->save();
-                              return response()->json(["status" => 200, "message" => "Berhasil input hasil checkup dan resep obat"]);
-                        } else {
-                              throw new Exception("Gagal menyimpan hasil checkup");
-                        }
-                  }
-            } catch (Exception $exception) {
-                  DB::rollBack();
-                  return response()->json(["status" => 500, "message" => "Error: " . $exception->getMessage()]);
+            if ($uploadRes === false) {
+                throw new Exception("Upload gambar gagal", 500);
             }
-      }
+        }
+
+        $checkupResult = CheckUpResult::create([
+            'assesmen_id' => $request->assesmen_id,
+            'hasil_diagnosa' => $request->hasil_diagnosa,
+            'url_file' => $path,
+        ]);
+
+        if ($checkupResult) {
+            $resepObatList = json_decode($request->resep_obat, true);
+
+            foreach ($resepObatList as $resep) {
+                // Find the obat record
+                $obat = Obat::findOrFail($resep['obat_id']);
+                    $obat->stock -= 1;
+
+                    if ($obat->stock == 0 ){
+                        $obat->is_disabled = true;
+                  }
+
+                  $obat->save();
+
+
+
+
+
+                // Create the detail resep obat record
+                DetailResepObat::create([
+                    'obat_id' => $resep['obat_id'],
+                    'checkup_id' => $checkupResult->id,
+                    'jumlah_pemakaian' => $resep['jumlah_pemakaian'],
+                    'waktu_pemakaian' => $resep['waktu_pemakaian'],
+                ]);
+            }
+
+            DB::commit();
+            $antrianId = DB::table('checkup_assesmens')
+                ->where('checkup_assesmens.id', $request->assesmen_id)
+                ->value('antrian_id'); // Use value() to directly get the antrian_id
+
+            if ($antrianId) {
+                // Find the corresponding antrian record and update its status
+                $res = AntrianTable::findOrFail($antrianId);
+                $res->status = 'Selesai';
+                $res->save();
+                return response()->json(["status" => 200, "message" => "Berhasil input hasil checkup dan resep obat"]);
+            } else {
+                throw new Exception("Gagal menyimpan hasil checkup");
+            }
+        }
+    } catch (Exception $exception) {
+        DB::rollBack();
+        return response()->json(["status" => 500, "message" => "Error: " . $exception->getMessage()]);
+    }
+}
+
 }

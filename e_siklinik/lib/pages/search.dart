@@ -15,8 +15,9 @@ class Search extends StatefulWidget {
 class _SearchState extends State<Search> {
   List<dynamic> checkupList = [];
   List<dynamic> filteredCheckupList = [];
-  final String apiGetCheckup = "http://10.0.2.2:8000/api/checkup-result";
+  final String apiGetCheckup = "http://192.168.239.136:8000/api/checkup-result";
   TextEditingController searchController = TextEditingController();
+  bool isLoading = true;
 
   @override
   void initState() {
@@ -38,8 +39,12 @@ class _SearchState extends State<Search> {
                 .compareTo(DateTime.parse(a['created_at'])));
             filteredCheckupList =
                 checkupList; // Inisialisasi daftar hasil pencarian
+            isLoading = false; // set loading to false when data is fetched
           });
         } else {
+          setState(() {
+            isLoading = false;
+          });
           print("No data received from API");
         }
       } else {
@@ -74,27 +79,27 @@ class _SearchState extends State<Search> {
       body: SafeArea(
         maintainBottomViewPadding: true,
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 8),
-                _buildHeader(),
-                const SizedBox(height: 10),
-                _buildSearchField(),
-                const SizedBox(height: 10),
-                const Text(
+          padding:
+              const EdgeInsets.only(top: 16, right: 16, left: 16, bottom: 22),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 2),
+              _buildHeader(),
+              const SizedBox(height: 15),
+              _buildSearchField(),
+              const SizedBox(height: 15),
+              const Center(
+                child: Text(
                   "Terakhir Checkup",
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
                 ),
-                const SizedBox(height: 10),
-                _buildCheckupList(),
-                const SizedBox(
-                  height: 70,
-                )
-              ],
-            ),
+              ),
+              const Divider(),
+              Expanded(
+                child: _buildCheckupList(),
+              ),
+            ],
           ),
         ),
       ),
@@ -104,7 +109,7 @@ class _SearchState extends State<Search> {
   Widget _buildHeader() {
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(color: Color(0xFF234DF0), width: 2),
+        border: Border.all(color: const Color(0xFF234DF0), width: 2),
         borderRadius: const BorderRadius.all(Radius.circular(15)),
         image: const DecorationImage(
             image: AssetImage('assets/images/Search.jpeg'), fit: BoxFit.fill),
@@ -168,39 +173,50 @@ class _SearchState extends State<Search> {
     // Limit the list to 5 items
     List<dynamic> limitedCheckupList = filteredCheckupList.take(5).toList();
 
-    return limitedCheckupList.isEmpty
+    return isLoading
         ? const Center(
-            child: Text(
-              'Checkup Kosong',
-              style: TextStyle(fontSize: 18.0),
-            ),
+            heightFactor: 10,
+            child: CircularProgressIndicator(),
           )
-        : ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: limitedCheckupList.length,
-            itemBuilder: (BuildContext context, int index) {
-              final checkup = limitedCheckupList[index];
-              final checkupId = checkup['id'];
-              return BoxSearchPage(
-                onTapBox: () {
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) =>
-                              RiwayatCheckup(checkupId: checkupId)));
-                },
-                nama: checkup['check_up_resul_to_assesmen']
-                    ['assesmen_to_antrian']['antrian_to_pasien']['nama'],
-                nrp: checkup['check_up_resul_to_assesmen']
-                    ['assesmen_to_antrian']['antrian_to_pasien']['nrp'],
-                icon: setIcon(Icons.person_outline, const Color(0xFF234DF0)),
-                prodi: Text(
-                  checkup['check_up_resul_to_assesmen']['assesmen_to_antrian']
-                      ['antrian_to_pasien']['pasien_to_prodi']['nama'],
+        : limitedCheckupList.isEmpty
+            ? Center(
+                child: Image.asset(
+                  'assets/images/error_checkup.png',
+                  fit: BoxFit.cover,
                 ),
+              )
+            : ListView.builder(
+                itemCount: limitedCheckupList.length + 1, // +1 for the SizedBox
+                itemBuilder: (BuildContext context, int index) {
+                  if (index == limitedCheckupList.length) {
+                    return const SizedBox(height: 80);
+                  } else {
+                    final checkup = limitedCheckupList[index];
+                    final checkupId = checkup['id'];
+                    return BoxSearchPage(
+                      onTapBox: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                RiwayatCheckup(checkupId: checkupId),
+                          ),
+                        );
+                      },
+                      nama: checkup['check_up_resul_to_assesmen']
+                          ['assesmen_to_antrian']['antrian_to_pasien']['nama'],
+                      nrp: checkup['check_up_resul_to_assesmen']
+                          ['assesmen_to_antrian']['antrian_to_pasien']['nrp'],
+                      icon: setIcon(
+                          Icons.person_outline, const Color(0xFF234DF0)),
+                      prodi: Text(
+                        checkup['check_up_resul_to_assesmen']
+                                ['assesmen_to_antrian']['antrian_to_pasien']
+                            ['pasien_to_prodi']['nama'],
+                      ),
+                    );
+                  }
+                },
               );
-            },
-          );
   }
 }

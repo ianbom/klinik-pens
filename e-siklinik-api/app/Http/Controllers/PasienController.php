@@ -23,6 +23,18 @@ class PasienController extends Controller
             return response()->json(['message' => 'Success tampil Pasien', 'pasien' => $pasien]);
       }
 
+      public function deletedPasien()
+      {
+            try {
+                  $pasiens = PasienTable::with('pasienToProdi')->where('is_disabled', '=', true)->get();
+                  if (count($pasiens) === 0) {
+                        return response()->json(['status' => 200, 'message' => 'Tidak ada data']);
+                  }
+                  return response()->json(['status' => 200, 'data' => $pasiens]);
+            } catch (Exception $exception) {
+                  return response()->json(['status' => 500, 'message' => 'Error: ' . $exception]);
+            }
+      }
 
       /**
        * Show the form for creating a new resource.
@@ -167,7 +179,7 @@ class PasienController extends Controller
       public function aktifPasien($id)
       {
             $pasien = PasienTable::find($id);
-            if ($pasien->is_disbaled == true) {
+            if ($pasien->is_disabled == true) {
                   $pasien->is_disabled = false;
                   $pasien->save();
                   return response()->json(['message' => 'Success aktifkan data Pasien']);

@@ -12,7 +12,7 @@ class ListPasienPage extends StatefulWidget {
 }
 
 class _ListPasienPageState extends State<ListPasienPage> {
-  final String apiGetAllPasien = "http://10.0.2.2:8000/api/pasien";
+  final String apiGetAllPasien = "http://192.168.239.136:8000/api/pasien";
   List<dynamic> pasienList = [];
 
   @override
@@ -73,7 +73,8 @@ class _ListPasienPageState extends State<ListPasienPage> {
                   child: ListTile(
                     leading: CircleAvatar(
                       backgroundImage: NetworkImage(
-                        'http://10.0.2.2:8000/storage/' + pasien['image'],
+                        'http://192.168.239.136:8000/storage/' +
+                            pasien['image'],
                       ),
                     ),
                     title: Text(pasien['nama'] ?? ''),

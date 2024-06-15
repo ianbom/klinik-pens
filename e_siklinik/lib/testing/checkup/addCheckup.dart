@@ -17,8 +17,8 @@ class _AddCheckupResultState extends State<AddCheckupResult> {
   final TextEditingController imageController = TextEditingController();
 
   final String apiPostCheckupResult =
-      "http://10.0.2.2:8000/api/checkup-obat/insert";
-  final String apiGetAllObat = "http://10.0.2.2:8000/api/obat";
+      "http://192.168.239.136:8000/api/checkup-obat/insert";
+  final String apiGetAllObat = "http://192.168.239.136:8000/api/obat";
 
   List<dynamic> obatList = [];
   Map<String, dynamic>? assesmentDetail;
@@ -56,7 +56,7 @@ class _AddCheckupResultState extends State<AddCheckupResult> {
     try {
       final response = await http.get(
         Uri.parse(
-            "http://10.0.2.2:8000/api/checkup-assesmen/show/${widget.assesmentId}"),
+            "http://192.168.239.136:8000/api/checkup-assesmen/show/${widget.assesmentId}"),
       );
       if (response.statusCode == 200) {
         final data = json.decode(response.body);

@@ -18,6 +18,7 @@ return new class extends Migration
                   $table->integer('stock');
                   $table->bigInteger('harga');
                   $table->string('image');
+                  $table->boolean('is_disabled')->default(false);
                   $table->foreignId('kategori_id')->constrained('kategori_obats')->cascadeOnUpdate()->cascadeOnDelete();
                   $table->timestamps();
             });

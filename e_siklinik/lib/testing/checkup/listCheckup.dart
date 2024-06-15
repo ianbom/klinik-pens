@@ -15,7 +15,7 @@ class CheckupListPage extends StatefulWidget {
 
 class _CheckupListPageState extends State<CheckupListPage> {
   List<dynamic> checkupList = [];
-  final String apiGetCheckup = "http://10.0.2.2:8000/api/checkup-result";
+  final String apiGetCheckup = "http://192.168.239.136:8000/api/checkup-result";
 
   @override
   void initState() {
@@ -53,7 +53,7 @@ class _CheckupListPageState extends State<CheckupListPage> {
         body: checkupList.isEmpty
             ? Center(
                 child: Text(
-                  'Checkup Kosong',
+                  'Checkup',
                   style: TextStyle(fontSize: 18.0),
                 ),
               )

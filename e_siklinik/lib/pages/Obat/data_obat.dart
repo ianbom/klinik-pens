@@ -1,11 +1,13 @@
 import 'package:e_siklinik/pages/Obat/addObat.dart';
-import 'package:e_siklinik/pages/Obat/add_obat.dart';
-import 'package:e_siklinik/testing/obat/addObat.dart';
+import 'package:e_siklinik/pages/Obat/edit_obat.dart';
+import 'package:e_siklinik/pages/Obat/detail_obat.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:e_siklinik/components/bottomsheet.dart';
+import 'package:e_siklinik/components/delete_confirmation.dart';
 
 class DataObat extends StatefulWidget {
   const DataObat({Key? key}) : super(key: key);
@@ -15,9 +17,11 @@ class DataObat extends StatefulWidget {
 }
 
 class _DataObatState extends State<DataObat> {
-  final String apiGetAllObat = "http://10.0.2.2:8000/api/obat";
+  final String apiGetAllObat = "http://192.168.239.136:8000/api/obat";
+
   List<dynamic> obatList = [];
   List<dynamic> searchObat = [];
+  bool isLoading = true;
 
   TextEditingController _searchController = TextEditingController();
 
@@ -29,6 +33,7 @@ class _DataObatState extends State<DataObat> {
         if (data != null && data['obats'] != null) {
           setState(() {
             obatList = data['obats'];
+            searchObat = obatList;
           });
         } else {
           print("No data received from API");
@@ -38,6 +43,40 @@ class _DataObatState extends State<DataObat> {
       }
     } catch (error) {
       print('Error: $error');
+    }
+  }
+
+  Future<void> _refreshData() async {
+    setState(() {
+      isLoading = true;
+    });
+    await _getAllObat();
+  }
+
+  Future<void> _disableObat(int obatId) async {
+    try {
+      final response = await http.put(
+          Uri.parse("http://192.168.239.136:8000/api/obat/disabled/$obatId"));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        print('Success: ${data['message']}');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Success: ${data['message']}')),
+        );
+        _refreshData();
+      } else {
+        final errorData = json.decode(response.body);
+        print('Failed: ${errorData['message']}');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed: ${errorData['message']}')),
+        );
+      }
+    } catch (error) {
+      print('Error: $error');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $error')),
+      );
     }
   }
 
@@ -69,22 +108,23 @@ class _DataObatState extends State<DataObat> {
   }
 
   String _getImage(int kategoriObat) {
-    if (kategoriObat == 1) { //bebas
-      return 'assets/images/OB.png';
-    } else if (kategoriObat == 2) { //bebas terbatas
-      return 'assets/images/OBT.png';
-    } else if (kategoriObat == 3) { //keras
-      return 'assets/images/OK.png';
-    } else if (kategoriObat == 4) { //narkotika
-      return 'assets/images/ON.png';
-    } else if (kategoriObat == 5) { //jamu
-      return 'assets/images/OJ.png';
-    } else if (kategoriObat == 6) { // herbal
-      return 'assets/images/OH.png';
-    } else if (kategoriObat == 7) { //farmatika
-      return 'assets/images/OF.png';
-    } else {
-      return 'assets/images/OD.png';
+    switch (kategoriObat) {
+      case 1:
+        return 'assets/images/OB.png';
+      case 2:
+        return 'assets/images/OBT.png';
+      case 3:
+        return 'assets/images/OK.png';
+      case 4:
+        return 'assets/images/ON.png';
+      case 5:
+        return 'assets/images/OJ.png';
+      case 6:
+        return 'assets/images/OH.png';
+      case 7:
+        return 'assets/images/OF.png';
+      default:
+        return 'assets/images/OD.png';
     }
   }
 
@@ -92,125 +132,208 @@ class _DataObatState extends State<DataObat> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        surfaceTintColor: Colors.transparent,
-        title: Text(
-          "Database Obat",
-          style: TextStyle(
-              fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
-        ),
-        centerTitle: true,
-        backgroundColor: Colors.white,
         leading: IconButton(
-          icon: Icon(Icons.arrow_left,
-              size: 50, color: Color.fromARGB(255, 0, 0, 0)),
-          onPressed: () {
-            Navigator.pop(context);
-          },
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            icon: const Icon(Icons.arrow_back_ios)),
+        backgroundColor: Colors.white,
+        elevation: 2,
+        shadowColor: Colors.black,
+        centerTitle: true,
+        title: const Text(
+          "Database Obat",
+          style: TextStyle(fontWeight: FontWeight.w600),
         ),
       ),
-      body: Column(
-        children: [
-          Container(
-            color: Colors.white,
-            child: Padding(
-              padding: EdgeInsets.all(16),
-              child: TextField(
-                controller: _searchController,
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: const Color.fromARGB(200, 235, 242, 255),
-                  labelText: 'Cari Obat',
-                  labelStyle: TextStyle(
-                      color: Colors.grey, fontWeight: FontWeight.bold),
-                  border: OutlineInputBorder(
-                      borderSide: BorderSide.none,
-                      borderRadius: BorderRadius.circular(30)),
-                  suffixIcon: Icon(Icons.search),
+      body: SafeArea(
+        child: obatList.isEmpty
+            ? Center(
+                child: Image.asset(
+                  'assets/images/obat_kosong.png',
+                  fit: BoxFit.cover,
                 ),
-              ),
-            ),
-          ),
-          Expanded(
-            child: GridView.builder(
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                mainAxisSpacing: 8.0,
-                crossAxisSpacing: 8.0,
-                childAspectRatio: MediaQuery.of(context).size.width /
-                    (MediaQuery.of(context).size.height / 2.5),
-              ),
-              itemCount: searchObat.length,
-              itemBuilder: (BuildContext context, int index) {
-                final obat = searchObat[index];
-                return IntrinsicHeight(
-                  child: Card(
-                    elevation: 3,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10.0),
-                        color: Colors.white,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          ListTile(
-                            leading: CircleAvatar(
-                              radius: 10,
-                              backgroundColor: Colors.transparent,
-                              child: Image.asset(
-                                _getImage(obat['kategori_id']),
-                                width: 40,
-                                height: 40,
-                                fit: BoxFit.fill,
-                              ),
+              )
+            : Column(
+                children: [
+                  Container(
+                    margin: const EdgeInsets.only(
+                        top: 16, right: 16, left: 16, bottom: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    width: double.infinity,
+                    height: 50,
+                    decoration: const BoxDecoration(
+                        color: Color(0xFFEFF0F3),
+                        borderRadius: BorderRadius.all(Radius.circular(30))),
+                    child: Row(
+                      children: [
+                        Flexible(
+                          child: TextField(
+                            controller: _searchController,
+                            maxLines: null,
+                            decoration: const InputDecoration(
+                              hintText: 'Search Here',
+                              border: InputBorder.none,
                             ),
-                            trailing: Container(
-                              child: IconButton(
-                                onPressed: () {},
-                                icon: Icon(Icons.more_vert),
+                          ),
+                        ),
+                        const Icon(Icons.search),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: GridView.builder(
+                      padding:
+                          const EdgeInsets.only(left: 16, right: 16, bottom: 8),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        mainAxisSpacing: 8.0,
+                        crossAxisSpacing: 8.0,
+                        childAspectRatio: MediaQuery.of(context).size.width /
+                            (MediaQuery.of(context).size.height / 2.5),
+                      ),
+                      itemCount: searchObat.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        final obat = searchObat[index];
+                        final obatId = obat['id'];
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: ((context) => ShowObat(
+                                        obatId: obatId,
+                                      ))),
+                            );
+                          },
+                          child: Card(
+                            elevation: 3,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                            ),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(10.0),
+                                color: Colors.white,
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(10.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        CircleAvatar(
+                                          radius: 20,
+                                          backgroundColor: Colors.transparent,
+                                          child: Image.asset(
+                                            _getImage(obat['kategori_id']),
+                                            width: 30,
+                                            height: 30,
+                                            fit: BoxFit.fill,
+                                          ),
+                                        ),
+                                        Spacer(),
+                                        GestureDetector(
+                                          onTap: () {
+                                            showModalBottomSheet(
+                                              isScrollControlled: true,
+                                              context: context,
+                                              builder: (context) => BuildSheet(
+                                                onTapEdit: () async {
+                                                  final result =
+                                                      await Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          EditObat(obat: obat),
+                                                    ),
+                                                  );
+                                                  if (result == true) {
+                                                    Navigator.pop(context);
+                                                    _refreshData();
+                                                  }
+                                                },
+                                                onTapDelete: () {
+                                                  showDeleteConfirmationDialog(
+                                                      context,
+                                                      () =>
+                                                          _disableObat(obatId),
+                                                      'delete');
+                                                },
+                                                deleteOrRestoreData:
+                                                    'Delete Data',
+                                              ),
+                                            );
+                                          },
+                                          child: const Icon(Icons.more_vert),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Expanded(
+                                      child: Text(
+                                        obat['nama_obat'],
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 20,
+                                        ),
+                                        maxLines: 1, // Limit the text to 1 line
+                                        overflow: TextOverflow
+                                            .ellipsis, // Handle overflow with ellipsis
+                                      ),
+                                    ),
+                                    const SizedBox(height: 5),
+                                    Text(
+                                        'EXP: ${obat['tanggal_kadaluarsa'] ?? '-'}'),
+                                    Text('Stok: ${obat['stock'] ?? '-'}')
+                                  ],
+                                ),
                               ),
                             ),
                           ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 10),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(obat['nama_obat'],
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 20)),
-                                Text(
-                                    'EXP: ${obat['tanggal_kadaluarsa'] ?? '-'}'),
-                                Text('Stok: ${obat['stock'] ?? '-'}')
-                              ],
-                            ),
-                          )
-                        ],
-                      ),
+                        );
+                      },
                     ),
                   ),
-                );
-              },
-            ),
-          ),
-        ],
+                ],
+              ),
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.blue,
-        shape: CircleBorder(),
+        backgroundColor: const Color(0xFF234DF0),
+        shape: const CircleBorder(),
         foregroundColor: Colors.black,
-        onPressed: () {
-          Navigator.push(
-              context, MaterialPageRoute(builder: ((context) => AddObatNew())));
+        onPressed: () async {
+          final result = await Navigator.push(context,
+              MaterialPageRoute(builder: ((context) => const AddObatNew())));
+          if (result == true) {
+            _refreshData();
+          }
         },
-        child: Icon(
+        child: const Icon(
           Icons.add,
-          size: 40,
+          size: 35,
           color: Colors.white,
         ),
       ),
     );
+  }
+
+  Future<void> _deleteObat(int id) async {
+    final String apiUrl = "http://192.168.239.136:8000/api/obat/$id";
+
+    try {
+      final response = await http.delete(Uri.parse(apiUrl));
+
+      if (response.statusCode == 200) {
+        print("Data obat dengan ID $id berhasil dihapus.");
+        _getAllObat();
+      } else {
+        print(
+            "Gagal menghapus data obat dengan ID $id. Status code: ${response.statusCode}");
+      }
+    } catch (error) {
+      print("Error: $error");
+    }
   }
 }

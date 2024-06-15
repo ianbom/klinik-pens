@@ -23,8 +23,8 @@ class _ShowPasienDetailState extends State<ShowPasienDetail> {
 
   Future<void> _getPasienDetail() async {
     try {
-      final response = await http.get(
-          Uri.parse("http://10.0.2.2:8000/api/pasien/show/${widget.pasienId}"));
+      final response = await http.get(Uri.parse(
+          "http://192.168.239.136:8000/api/pasien/show/${widget.pasienId}"));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data != null && data['pasien'] != null) {
@@ -43,7 +43,7 @@ class _ShowPasienDetailState extends State<ShowPasienDetail> {
   Future<void> _getRiwayatCheckup() async {
     try {
       final response = await http.get(Uri.parse(
-          "http://10.0.2.2:8000/api/riwayat-pasien/${widget.pasienId}"));
+          "http://192.168.239.136:8000/api/riwayat-pasien/${widget.pasienId}"));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data != null && data['checkup'] != null) {
@@ -70,7 +70,8 @@ class _ShowPasienDetailState extends State<ShowPasienDetail> {
               children: [
                 CircleAvatar(
                   backgroundImage: NetworkImage(
-                      'http://10.0.2.2:8000/storage/' + pasienDetail!['image']),
+                      'http://192.168.239.136:8000/storage/' +
+                          pasienDetail!['image']),
                 ),
                 Text('Nama: ${pasienDetail!['nama']}'),
                 Text('NRP: ${pasienDetail!['nrp']}'),
